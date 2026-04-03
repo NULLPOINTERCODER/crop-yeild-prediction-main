@@ -1,23 +1,10 @@
 from django.db import models
 
 class FarmInput(models.Model):
-    DISTRICT_CHOICES = [
-        ('angul', 'Angul'), ('balangir', 'Balangir'), ('balasore', 'Balasore'),
-        ('bargarh', 'Bargarh'), ('bhadrak', 'Bhadrak'), ('boudh', 'Boudh'),
-        ('cuttack', 'Cuttack'), ('deogarh', 'Deogarh'), ('dhenkanal', 'Dhenkanal'),
-        ('gajapati', 'Gajapati'), ('ganjam', 'Ganjam'), ('jagatsinghpur', 'Jagatsinghpur'),
-        ('jajpur', 'Jajpur'), ('jharsuguda', 'Jharsuguda'), ('kalahandi', 'Kalahandi'),
-        ('kandhamal', 'Kandhamal'), ('kendrapara', 'Kendrapara'), ('keonjhar', 'Keonjhar'),
-        ('khordha', 'Khordha'), ('koraput', 'Koraput'), ('malkangiri', 'Malkangiri'),
-        ('mayurbhanj', 'Mayurbhanj'), ('nabarangpur', 'Nabarangpur'), ('nayagarh', 'Nayagarh'),
-        ('nuapada', 'Nuapada'), ('puri', 'Puri'), ('rayagada', 'Rayagada'),
-        ('sambalpur', 'Sambalpur'), ('sonepur', 'Sonepur'), ('sundargarh', 'Sundargarh')
-    ]
-    
     CROP_CHOICES = [
         ('rice', 'Rice'), ('maize', 'Maize'), ('wheat', 'Wheat'),
         ('groundnut', 'Groundnut'), ('mung', 'Mung'), ('cotton', 'Cotton'),
-        ('sugarcane', 'Sugarcane'), ('turmeric', 'Turmeric')
+        ('sugarcane', 'Sugarcane'), ('turmeric', 'Turmeric'), ('other', 'Other')
     ]
     
     SEASON_CHOICES = [
@@ -38,8 +25,10 @@ class FarmInput(models.Model):
         ('local', 'Local'), ('hyv', 'HYV'), ('hybrid', 'Hybrid')
     ]
     
-    district = models.CharField(max_length=50, choices=DISTRICT_CHOICES)
+    state = models.CharField(max_length=100)
+    district = models.CharField(max_length=100)
     crop = models.CharField(max_length=50, choices=CROP_CHOICES)
+    manual_crop = models.CharField(max_length=100, blank=True, null=True)
     season = models.CharField(max_length=20, choices=SEASON_CHOICES)
     sowing_date = models.DateField()
     field_area = models.FloatField(help_text="Area in hectares")
@@ -80,24 +69,12 @@ class Contact(models.Model):
         return f"Contact from {self.name}: {self.subject}"
 
 class PesticideShop(models.Model):
-    DISTRICT_CHOICES = [
-        ('angul', 'Angul'), ('balangir', 'Balangir'), ('balasore', 'Balasore'),
-        ('bargarh', 'Bargarh'), ('bhadrak', 'Bhadrak'), ('boudh', 'Boudh'),
-        ('cuttack', 'Cuttack'), ('deogarh', 'Deogarh'), ('dhenkanal', 'Dhenkanal'),
-        ('gajapati', 'Gajapati'), ('ganjam', 'Ganjam'), ('jagatsinghpur', 'Jagatsinghpur'),
-        ('jajpur', 'Jajpur'), ('jharsuguda', 'Jharsuguda'), ('kalahandi', 'Kalahandi'),
-        ('kandhamal', 'Kandhamal'), ('kendrapara', 'Kendrapara'), ('keonjhar', 'Keonjhar'),
-        ('khordha', 'Khordha'), ('koraput', 'Koraput'), ('malkangiri', 'Malkangiri'),
-        ('mayurbhanj', 'Mayurbhanj'), ('nabarangpur', 'Nabarangpur'), ('nayagarh', 'Nayagarh'),
-        ('nuapada', 'Nuapada'), ('puri', 'Puri'), ('rayagada', 'Rayagada'),
-        ('sambalpur', 'Sambalpur'), ('sonepur', 'Sonepur'), ('sundargarh', 'Sundargarh')
-    ]
-    
     shop_name = models.CharField(max_length=200)
     owner_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)
     email = models.EmailField(blank=True, null=True)
-    district = models.CharField(max_length=50, choices=DISTRICT_CHOICES)
+    state = models.CharField(max_length=100)
+    district = models.CharField(max_length=100)
     address = models.TextField()
     pincode = models.CharField(max_length=10)
     pesticides_available = models.TextField(help_text="List of pesticides available (comma-separated)")
@@ -105,4 +82,4 @@ class PesticideShop(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.shop_name} - {self.get_district_display()}"
+        return f"{self.shop_name} - {self.district}"

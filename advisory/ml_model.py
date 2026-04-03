@@ -170,102 +170,125 @@ class YieldPredictor:
         return max(prediction, 100), confidence
     
     def generate_recommendations(self, farm_input, predicted_yield):
-        """Generate AI-powered actionable recommendations"""
+        """Generate AI-powered actionable recommendations with Suitability Audit"""
         import openai
         from django.conf import settings
         
         try:
-            # Create prompt for AI
-            prompt = f"""You are an expert agricultural advisor for Odisha, India. Analyze this farm data and provide recommendations.
+            # Create a more structured and critical prompt for the AI
+            prompt = f"""You are a senior agricultural consultant for India. Evaluate this farm setup for technical suitability and yield optimization.
 
 Farm Details:
-- Crop: {farm_input.get_crop_display()}
-- District: {farm_input.get_district_display()}
+- State: {farm_input.state}
+- District: {farm_input.district}
+- Target Crop: {farm_input.manual_crop if farm_input.crop == 'other' else farm_input.get_crop_display()}
 - Season: {farm_input.get_season_display()}
-- Field Area: {farm_input.field_area} hectares
+- Soil Type: {farm_input.get_soil_type_display()}
 - Irrigation: {farm_input.get_irrigation_display()}
 - Seed Variety: {farm_input.get_seed_variety_display()}
-- Soil Type: {farm_input.get_soil_type_display()}
-- Soil Health Card: {'Yes' if farm_input.soil_health_card else 'No'}
-- Pest/Disease Present: {'Yes' if farm_input.pest_presence else 'No'}
-- Predicted Yield: {predicted_yield:.0f} kg/ha
+- Soil Health Card: {'Available' if farm_input.soil_health_card else 'Not Available'}
+- Current Pests: {'Yes' if farm_input.pest_presence else 'No'}
+- Predicted Base Yield: {predicted_yield:.0f} kg/ha
 
-Provide recommendations in this EXACT format:
+Instructions:
+1. SUITABILITY AUDIT: Determine if the target crop is a good match for the soil type, season, and irrigation level in {farm_input.state}. 
+   - If suitable: Explain why. 
+   - If UNSUITABLE (e.g., Rice in summer without water, Wheat in saline soil, etc.): Explicitly warn the user, explain why, and suggest 2-3 better alternative crops for these exact conditions.
 
-ACTION 1: [specific action with timing]
-ACTION 2: [specific action with timing]
-ACTION 3: [specific action with timing]
+2. TOP 3 PRIORITY ACTIONS: Provide 3 concrete, timed actions to maximize yield for this specific scenario.
 
-CROP SUITABILITY: [Analyze if this crop is suitable for the given soil type, season, and irrigation. If NOT suitable, suggest 2-3 better alternative crops for these conditions]
+3. SPECIAL ADVICE: One high-impact expert tip for this specific district/region.
 
-SPECIAL ADVICE: [One important tip specific to this farm's conditions in Odisha]
-
-Focus on: irrigation, fertilization, pest control, and yield optimization."""
+Response Format (STRICT):
+CROP SUITABILITY: [Audit text here]
+---
+ACTION 1: [Priority 1 action with timing]
+ACTION 2: [Priority 2 action with timing]
+ACTION 3: [Priority 3 action with timing]
+---
+SPECIAL ADVICE: [Region-specific expert tip]"""
 
             client = openai.OpenAI(api_key=settings.TOGETHER_AI_API_KEY, base_url="https://api.together.xyz/v1")
             response = client.chat.completions.create(
                 model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=600,
-                temperature=0.7
+                messages=[
+                    {"role": "system", "content": "You are a precise agricultural scientist. You provide data-driven audits and actionable advice for Indian farmers."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=800,
+                temperature=0.4
             )
             
             ai_response = response.choices[0].message.content.strip()
-            print(f"AI Response: {ai_response}")
+            print(f"DEBUG AI Response:\n{ai_response}")
             
-            # Parse AI response
-            actions = []
+            # Parsing logic for the structured output
+            sections = ai_response.split('---')
+            
             crop_suitability = ""
+            actions = []
             special_advice = ""
             
-            lines = ai_response.split('\n')
-            for i, line in enumerate(lines):
-                line = line.strip()
-                if line.startswith('ACTION'):
-                    action_text = line.split(':', 1)[1].strip() if ':' in line else line.strip()
-                    actions.append(action_text)
-                elif 'CROP SUITABILITY' in line:
-                    # Get content after this line
-                    crop_suitability = '\n'.join(lines[i+1:]).split('SPECIAL ADVICE')[0].strip()
-                elif 'SPECIAL ADVICE' in line:
-                    special_advice = '\n'.join(lines[i+1:]).strip()
-            
-            # Ensure we have 3 actions
+            for section in sections:
+                section = section.strip()
+                if section.startswith('CROP SUITABILITY:'):
+                    crop_suitability = section.replace('CROP SUITABILITY:', '').strip()
+                elif 'ACTION 1:' in section:
+                    # Extract Actions
+                    lines = section.split('\n')
+                    for line in lines:
+                        if 'ACTION' in line and ':' in line:
+                            actions.append(line.split(':', 1)[1].strip())
+                elif section.startswith('SPECIAL ADVICE:'):
+                    special_advice = section.replace('SPECIAL ADVICE:', '').strip()
+
+            # Robust fallback parsing if separators fail
+            if not crop_suitability or not actions or not special_advice:
+                lines = ai_response.split('\n')
+                for i, line in enumerate(lines):
+                    if 'CROP SUITABILITY:' in line:
+                        crop_suitability = line.split(':', 1)[1].strip() if ':' in line else ""
+                    elif 'ACTION 1:' in line:
+                        actions.append(line.split(':', 1)[1].strip())
+                    elif 'ACTION 2:' in line:
+                        actions.append(line.split(':', 1)[1].strip())
+                    elif 'ACTION 3:' in line:
+                        actions.append(line.split(':', 1)[1].strip())
+                    elif 'SPECIAL ADVICE:' in line:
+                        special_advice = line.split(':', 1)[1].strip()
+
+            # Ensure we have data
             while len(actions) < 3:
-                actions.append("Monitor crop regularly and consult local agriculture officer")
+                actions.append("Monitor soil moisture levels and consult with local Krishi Vigyan Kendra (KVK).")
             
             if not crop_suitability:
-                crop_suitability = f"{farm_input.get_crop_display()} is suitable for {farm_input.get_soil_type_display()} soil in {farm_input.get_season_display()} season."
+                crop_suitability = f"The selected crop is generally suitable for {farm_input.get_soil_type_display()} soil in {farm_input.get_season_display()}."
             
             if not special_advice:
-                special_advice = "Maintain regular field monitoring and follow recommended agricultural practices."
-            
-            potential_gain = self._calculate_potential_gain(farm_input)
-            
+                special_advice = f"Focus on integrated nutrient management to sustain long-term soil fertility in {farm_input.district}."
+
             return {
                 'action_1': actions[0],
                 'action_2': actions[1],
                 'action_3': actions[2],
-                'reasoning': f"AI-powered analysis for {farm_input.get_crop_display()} cultivation in {farm_input.get_district_display()} district.",
-                'estimated_gain': potential_gain,
+                'reasoning': f"Expert analysis for {farm_input.get_crop_display()} cultivation in {farm_input.district}, {farm_input.state}.",
+                'estimated_gain': self._calculate_potential_gain(farm_input),
                 'crop_suitability': crop_suitability,
                 'special_advice': special_advice
             }
             
         except Exception as e:
-            print(f"AI recommendation failed: {e}, using fallback")
-            # Fallback to rule-based
-            potential_gain = self._calculate_potential_gain(farm_input)
+            print(f"CRITICAL AI ERROR: {e}")
             return {
                 'action_1': self._get_priority_action_1(farm_input),
                 'action_2': self._get_priority_action_2(farm_input),
                 'action_3': self._get_priority_action_3(farm_input),
-                'reasoning': f"Analysis of {farm_input.get_crop_display()} in {farm_input.get_district_display()} during {farm_input.get_season_display()} season.",
-                'estimated_gain': potential_gain,
+                'reasoning': "Rule-based analysis (AI API currently unavailable).",
+                'estimated_gain': self._calculate_potential_gain(farm_input),
                 'crop_suitability': self._get_crop_suitability(farm_input),
                 'special_advice': self._get_special_advice(farm_input)
             }
-    
+
     def _calculate_potential_gain(self, farm_input):
         """Calculate potential yield gain from improved practices"""
         gain = 0

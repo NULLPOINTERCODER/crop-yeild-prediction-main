@@ -259,7 +259,7 @@ def chatbot(request):
             # Set Together AI API key from settings
 
             # Improved farming-specific context with kindness and responsiveness emphasis
-            system_prompt = """You are Krishi Salahkar, a kind, polite, and responsive AI agricultural assistant specializing in farming advice for Odisha, India.
+            system_prompt = """You are Krishi Salahkar, a kind, polite, and responsive AI agricultural assistant specializing in farming advice for India.
             You help farmers with:
             - Crop selection and planning
             - Soil management and fertilization
@@ -267,12 +267,12 @@ def chatbot(request):
             - Irrigation techniques
             - Weather-based farming decisions
             - Sustainable farming practices
-            - Odisha-specific agricultural knowledge
+            - Region-specific agricultural knowledge across all Indian states
 
             Always provide practical, actionable advice based on scientific farming principles.
             Keep responses concise, informative, and kind.
             Always respond in a friendly and encouraging manner.
-            If you don't know something specific to Odisha, acknowledge this politely and provide general best practices."""
+            If you don't know something specific to a particular state or district, acknowledge this politely and provide general best practices."""
 
             # Create chat completion using Together AI API
             client = openai.OpenAI(api_key=settings.TOGETHER_AI_API_KEY, base_url="https://api.together.xyz/v1")
@@ -308,9 +308,9 @@ def chatbot(request):
 
             # Expanded fallback responses for common farming questions
             fallback_responses = {
-                'rice': 'For rice cultivation in Odisha, use varieties like Naveen or Swarna. Plant during Kharif season (June-July) with proper irrigation and apply NPK fertilizers.',
-                'wheat': 'Wheat grows well in Odisha during Rabi season. Use varieties like HD-2967. Ensure proper irrigation and apply fertilizers at recommended doses.',
-                'maize': 'Maize is a good crop for Odisha. Plant in well-drained soil and use recommended fertilizers for best yield.',
+                'rice': 'For rice cultivation in India, use suitable varieties based on your state. Plant during appropriate seasons like Kharif or Rabi with proper irrigation and balanced NPK fertilizers.',
+                'wheat': 'Wheat grows well in many parts of India during the Rabi season. Ensure proper irrigation and apply fertilizers at recommended doses for your specific region.',
+                'maize': 'Maize is a popular crop across India. Plant in well-drained soil and use recommended fertilizers for best yield based on your local soil report.',
                 'pest': 'For pest control, use integrated pest management techniques including biological controls and safe pesticides.',
                 'default': 'I\'m here to help with your farming questions. Please ask about crops, irrigation, fertilizers, or any agricultural topic! I\'ll do my best to assist you kindly.'
             }
@@ -359,7 +359,7 @@ def nearby_shops(request, district=None):
         shops = PesticideShop.objects.all()
         shops_with_distance = []
         
-        # Approximate coordinates for Odisha districts (center points)
+        # Current coordinate mapping for districts (primarily Odisha center points for now)
         district_coords = {
             'angul': (20.8400, 85.1000), 'balangir': (20.7100, 83.4900),
             'balasore': (21.4934, 86.9336), 'bargarh': (21.3333, 83.6167),

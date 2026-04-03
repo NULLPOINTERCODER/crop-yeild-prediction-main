@@ -281,30 +281,6 @@
                 </div>
             </div>
 
-            <!-- Crop Suitability Analysis -->
-            {% if recommendation.crop_suitability %}
-            <div class="card mb-4 border-0">
-                <div class="card-header text-white position-relative" style="background: linear-gradient(135deg, #28a745, #20c997); border-radius: 20px 20px 0 0;">
-                    <h5 class="mb-0 position-relative">
-                        <i class="fas fa-leaf me-2"></i>
-                        Crop Suitability Analysis
-                    </h5>
-                    <small class="position-relative opacity-75">Is this the right crop for your land?</small>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-start">
-                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; min-width: 50px;">
-                            <i class="fas fa-seedling"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="alert alert-success mb-0" role="alert">
-                                <p class="mb-0 lh-lg">{{ recommendation.crop_suitability }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
 
             <!-- Special Advice -->
             {% if recommendation.special_advice %}
