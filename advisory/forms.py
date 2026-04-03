@@ -42,14 +42,14 @@ class FarmInputForm(forms.ModelForm):
 class SignupForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
 
-    class Meta:
+    class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', 'email', 'password1', 'password2')
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'password1': forms.PasswordInput(attrs={'class': 'form-control', 'type': 'password'}),
-            'password2': forms.PasswordInput(attrs={'class': 'form-control', 'type': 'password'}),
-        }
+        fields = UserCreationForm.Meta.fields + ('email',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
 
     def save(self, commit=True):
         user = super().save(commit=False)
