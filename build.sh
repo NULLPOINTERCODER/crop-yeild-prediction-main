@@ -3,7 +3,8 @@
 set -e
 
 echo "--- Installing Dependencies ---"
-pip install -r requirements.txt
+# Using --break-system-packages as required by Vercel's managed environment
+python3 -m pip install -r requirements.txt --break-system-packages
 
 echo "--- Running Migrations ---"
 python3 manage.py makemigrations --noinput
