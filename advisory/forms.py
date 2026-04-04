@@ -44,7 +44,7 @@ class SignupForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = UserCreationForm.Meta.fields + ('email',)
+        fields = ("username", "email")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,6 +57,7 @@ class SignupForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
 
 class ContactForm(forms.ModelForm):
     class Meta:
